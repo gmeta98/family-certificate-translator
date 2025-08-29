@@ -47,6 +47,16 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
+
+# --- Simple password gate (one shared password) ---
+password = st.text_input("Password", type="password")
+if "APP_PASSWORD" not in st.secrets:
+    st.stop()  # safety if not configured
+if password != st.secrets["APP_PASSWORD"]:
+    st.warning("Enter the password to continue")
+    st.stop()
+# ---------------------------------------------------
+
 # ── HELPER: TEXTRACT OCR WRAPPER (with page tagging) ─────────────────────────
 from PIL import Image
 
