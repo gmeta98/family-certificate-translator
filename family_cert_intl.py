@@ -263,7 +263,7 @@ def extract_seal_footer(blocks):
     if m:
         cleaned = re.sub(r"^(Date|Datë|Daté)\s*:?\s*", "",
                          m.group(0), flags=re.I).strip()
-        date_line = f"In data: {cleaned}"
+        date_line = f"{cleaned}"
 
     # 5) harvest _all_ 30–40 char runs (allowing OCR’d “O” too)
     raw = re.findall(r"\b[0-9A-Fa-fO]{30,40}\b", snippet)
