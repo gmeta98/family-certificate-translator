@@ -1,7 +1,8 @@
-import os, re, zipfile
+import os, re, zipfile, unicodedata
 from io import BytesIO
 from datetime import datetime
 from dotenv import load_dotenv
+
 
 import boto3
 import streamlit as st
@@ -114,6 +115,64 @@ def get_textract_blocks(uploaded_file):
     buf.seek(0)
     return analyze_bytes(buf.getvalue(), page_no=1)
 
+# -- HELPER: translator
+
+def _norm(s: str) -> str:
+    if not s: return ""
+    # lower, strip, remove accents, collapse spaces and punctuation/slashes
+    s = s.strip().lower()
+    s = ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    s = re.sub(r'[\s\.\-_/]+', ' ', s).strip()
+    return s
+
+RELATION_MAP = {
+    "kryefamiljar": "Capofamiglia",
+    "i biri": "Figlio",
+    "biri": "Figlio",
+    "e bija": "Figlia",
+    "bija": "Figlia",
+    "bashkeshortja": "Moglie",
+    "bashkeshorti": "Marito",
+    "gruaja": "Moglie",
+    "burri": "Marito",
+    "nipi": "Nipote (maschio)",
+    "mbesa": "Nipote (femmina)",
+    "babai": "Padre",
+    "nena": "Madre",
+    "gjyshi": "Nonno",
+    "gjyshja": "Nonna",
+    "vellai": "Fratello",
+    "motra": "Sorella"
+}
+
+MARITAL_MAP = {
+    "i martuar":  ("Coniugato", "Coniugata"),
+    "e martuar":  ("Coniugato", "Coniugata"),
+    "i/e martuar":("Coniugato", "Coniugata"),
+    "beqar":      ("Celibe", "Nubile"),
+    "beqare":     ("Celibe", "Nubile"),
+    "beqar/e":    ("Celibe", "Nubile"),
+    "i/e ve":     ("Vedovo", "Vedova"),
+    "i ve":       ("Vedovo", "Vedova"),
+    "e ve":       ("Vedovo", "Vedova"),
+    "i/e divorcuar": ("Divorziato", "Divorziata"),
+    "i/e ndare":     ("Separato", "Separata")
+}
+
+def translate_relation(alb_relation: str, sex: str) -> str:
+    n = _norm(alb_relation)
+    if n in RELATION_MAP:
+        return RELATION_MAP[n]
+    return alb_relation
+
+def translate_marital_status(alb_status: str, sex: str) -> str:
+    n = _norm(alb_status)
+    s = (sex or "").strip().upper()
+    if n in MARITAL_MAP:
+        male, female = MARITAL_MAP[n]
+        return female if s == "F" else male
+    return alb_status
+
 
 
 # ── HELPER: Extract Issue Date (dd.MM.yyyy) ─────────────────────────────────
@@ -213,7 +272,13 @@ def extract_family_table_v2(blocks, bmap):
     data_rows = []
     for idx, r in enumerate(range(3, 13), start=1):
         row = rows_map.get(r, {})
+        sex = (row.get(5, "") or "").strip().upper()  # "M" / "F"
         dob = "/".join(filter(None, [row.get(7,""), row.get(8,""), row.get(9,"")]))
+
+        # Apply glossary/translation
+        rel_it  = translate_relation(row.get(6, ""), sex)
+        stat_it = translate_marital_status(row.get(10, ""), sex)
+
         data_rows.append({
             "N.":                            str(idx),
             "1. Nome e Cognome":             row.get(2, ""),
