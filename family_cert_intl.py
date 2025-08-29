@@ -36,9 +36,10 @@ textract = boto3.client(
     region_name           = os.getenv("AWS_REGION") or "us-east-2"
 )
 
+
 # ── STREAMLIT UI ────────────────────────────────────────────────────────────
 st.set_page_config(page_title="AI Translator - Certifikata Familjare", layout="centered")
-st.title("Certifikata Familjare: Shqip - Italisht")
+st.title("Certifikata Familjare: Shqip  -  Italisht")
 st.markdown("Upload one or more family certificates (PDF or image), then download the Italian DOCX.")
 
 uploaded_files = st.file_uploader(
@@ -46,7 +47,6 @@ uploaded_files = st.file_uploader(
     type=["pdf", "jpg", "jpeg", "png"],
     accept_multiple_files=True
 )
-
 
 # --- Simple password gate (one shared password) ---
 password = st.text_input("Password", type="password")
