@@ -536,18 +536,18 @@ def make_docx(people, comune, sezione, seal_text):
     hdr_row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY # enforce exact height
 
     # data rows
-    DATA_ROW_MIN = Cm(0.6)  # tweak ~0.60–1.10 cm for “slightly taller”
+    DATA_ROW_MIN = Cm(0.5)  # tweak ~0.60–1.10 cm for “slightly taller”
 
     for person in people:
         row = dt.add_row()
         row.height = DATA_ROW_MIN
         row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        
-        cells = dt.add_row().cells
-        for i,key in enumerate(cols):
-            val = person.get(key,"")
-            cells[i].text = val
-            cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+        cells = row.cells
+        for i, key in enumerate(cols):
+            c = cells[i]
+            c.text = person.get(key, "")
+            p = c.paragraphs[0]
+            p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
     for row in dt.rows:
         for cell in row.cells:
