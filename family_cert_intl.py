@@ -159,6 +159,30 @@ MARITAL_MAP = {
     "i/e ndare":     ("Separato", "Separata")
 }
 
+CITIZENSHIP_MAP = {
+    # what you asked for:
+    "shqiptare": "Albanese",
+    "shqiptar":  "Albanese",
+    "shqiptar/e":"Albanese",
+
+    # a few examples to extend (optional):
+    "italian":      ("Italiano", "Italiana"),
+    "italiane":     ("Italiano", "Italiana"),
+    "grek":         ("Greco", "Greca"),
+    "greke":        ("Greco", "Greca"),
+    "francez":      "Francese",
+    "franceze":     "Francese",
+}
+
+def translate_citizenship(alb_cit: str, sex: str) -> str:
+    n = _norm(alb_cit)
+    if n in CITIZENSHIP_MAP:
+        it = CITIZENSHIP_MAP[n]
+        if isinstance(it, tuple):
+            return it[1] if (sex or "").strip().upper() == "F" else it[0]
+        return it
+    return alb_cit
+
 def translate_relation(alb_relation: str, sex: str) -> str:
     n = _norm(alb_relation)
     if n in RELATION_MAP:
@@ -270,28 +294,29 @@ def extract_family_table_v2(blocks, bmap):
 
     # 4) extract data rows 3–12
     data_rows = []
-    for idx, r in enumerate(range(3, 13), start=1):
-        row = rows_map.get(r, {})
-        sex = (row.get(5, "") or "").strip().upper()  # "M" / "F"
-        dob = "/".join(filter(None, [row.get(7,""), row.get(8,""), row.get(9,"")]))
+for idx, r in enumerate(range(3, 13), start=1):
+    row = rows_map.get(r, {})
+    sex = (row.get(5, "") or "").strip().upper()  # "M" / "F"
+    dob = "/".join(filter(None, [row.get(7,""), row.get(8,""), row.get(9,"")]))
 
-        # Apply glossary/translation
-        rel_it  = translate_relation(row.get(6, ""), sex)
-        stat_it = translate_marital_status(row.get(10, ""), sex)
+    # Apply glossary/translation
+    rel_it  = translate_relation(row.get(6, ""), sex)
+    stat_it = translate_marital_status(row.get(10, ""), sex)
+    cit_it   = translate_citizenship(row.get(12, ""),  sex)
 
-        data_rows.append({
-            "N.":                            str(idx),
-            "1. Nome e Cognome":             row.get(2, ""),
-            "2. Nome del Padre":             row.get(3, ""),
-            "3. Nome della Madre":           row.get(4, ""),
-            "4. Sesso":                      row.get(5, ""),
-            "5. Legame con il capofamiglia": row.get(6, ""),
-            "6. Data di nascita":            dob,
-            "7. Stato Civile":               row.get(10, ""),
-            "8. Luogo di Nascita":           row.get(11, ""),
-            "9. Cittadinanza":               row.get(12, ""),
-            "10. Numero Personale":          row.get(13, ""),
-        })
+    data_rows.append({
+        "N.":                            str(idx),
+        "1. Nome e Cognome":             row.get(2, ""),
+        "2. Nome del Padre":             row.get(3, ""),
+        "3. Nome della Madre":           row.get(4, ""),
+        "4. Sesso":                      sex,       # ← use normalized sex
+        "5. Legame con il capofamiglia": rel_it,    # ← translated
+        "6. Data di nascita":            dob,
+        "7. Stato Civile":               stat_it,   # ← translated
+        "8. Luogo di Nascita":           row.get(11, ""),
+        "9. Cittadinanza":               cit_it,    # translated
+        "10. Numero Personale":          row.get(13, ""),
+    })
 
     # 5) extract the seal footer from *all* lines
     seal_footer = extract_seal_footer(blocks)
