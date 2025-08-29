@@ -264,68 +264,68 @@ def extract_family_table_v2(blocks, bmap):
     import re
 
     # 1) find the TABLE on page 2
-    tbl = next((b for b in blocks 
-                if b["BlockType"]=="TABLE" and b.get("Page")==2), None)
+    tbl = next((b for b in blocks
+                if b["BlockType"] == "TABLE" and b.get("Page") == 2), None)
     if not tbl:
         return {"header": [], "rows": [], "seal_footer": ""}
 
     # 2) build a map: rows_map[row_index][col_index] = cell_text
     rows_map = {}
     for rel in tbl.get("Relationships", []):
-        if rel["Type"]!="CHILD": 
+        if rel["Type"] != "CHILD":
             continue
         for cid in rel["Ids"]:
             cell = bmap[cid]
-            if cell["BlockType"]!="CELL": 
+            if cell["BlockType"] != "CELL":
                 continue
             r, c = cell["RowIndex"], cell["ColumnIndex"]
             txt = " ".join(
                 bmap[wid]["Text"]
                 for ch in cell.get("Relationships", [])
-                if ch["Type"]=="CHILD"
+                if ch["Type"] == "CHILD"
                 for wid in ch["Ids"]
-                if bmap[wid]["BlockType"]=="WORD"
+                if bmap[wid]["BlockType"] == "WORD"
             ).strip()
             rows_map.setdefault(r, {})[c] = txt
 
     # 3) extract header row (row 1)
     max_col = max((c for row in rows_map.values() for c in row.keys()), default=0)
-    header = [ rows_map.get(1, {}).get(c, "") for c in range(1, max_col+1) ]
+    header = [rows_map.get(1, {}).get(c, "") for c in range(1, max_col + 1)]
 
     # 4) extract data rows 3–12
     data_rows = []
-for idx, r in enumerate(range(3, 13), start=1):
-    row = rows_map.get(r, {})
-    sex = (row.get(5, "") or "").strip().upper()  # "M" / "F"
-    dob = "/".join(filter(None, [row.get(7,""), row.get(8,""), row.get(9,"")]))
+    for idx, r in enumerate(range(3, 13), start=1):
+        row = rows_map.get(r, {})
+        sex = (row.get(5, "") or "").strip().upper()  # "M" / "F"
+        dob = "/".join(filter(None, [row.get(7, ""), row.get(8, ""), row.get(9, "")]))
 
-    # Apply glossary/translation
-    rel_it  = translate_relation(row.get(6, ""), sex)
-    stat_it = translate_marital_status(row.get(10, ""), sex)
-    cit_it   = translate_citizenship(row.get(12, ""),  sex)
+        # Apply glossary/translation
+        rel_it = translate_relation(row.get(6, ""), sex)
+        stat_it = translate_marital_status(row.get(10, ""), sex)
+        cit_it = translate_citizenship(row.get(12, ""), sex)
 
-    data_rows.append({
-        "N.":                            str(idx),
-        "1. Nome e Cognome":             row.get(2, ""),
-        "2. Nome del Padre":             row.get(3, ""),
-        "3. Nome della Madre":           row.get(4, ""),
-        "4. Sesso":                      sex,       # ← use normalized sex
-        "5. Legame con il capofamiglia": rel_it,    # ← translated
-        "6. Data di nascita":            dob,
-        "7. Stato Civile":               stat_it,   # ← translated
-        "8. Luogo di Nascita":           row.get(11, ""),
-        "9. Cittadinanza":               cit_it,    # translated
-        "10. Numero Personale":          row.get(13, ""),
-    })
+        data_rows.append({
+            "N.":                            str(idx),
+            "1. Nome e Cognome":             row.get(2, ""),
+            "2. Nome del Padre":             row.get(3, ""),
+            "3. Nome della Madre":           row.get(4, ""),
+            "4. Sesso":                      sex,            # normalized
+            "5. Legame con il capofamiglia": rel_it,         # translated
+            "6. Data di nascita":            dob,
+            "7. Stato Civile":               stat_it,        # translated
+            "8. Luogo di Nascita":           row.get(11, ""),
+            "9. Cittadinanza":               cit_it,         # translated
+            "10. Numero Personale":          row.get(13, ""),
+        })
 
     # 5) extract the seal footer from *all* lines
     seal_footer = extract_seal_footer(blocks)
 
-return {
-    "header":      header,
-    "rows":        data_rows,
-    "seal_footer": seal_footer
-}
+    return {
+        "header":      header,
+        "rows":        data_rows,
+        "seal_footer": seal_footer
+    }
 
 
 # ── HEADER (Comune / Sezione) ───────────────────────────────────────────────
