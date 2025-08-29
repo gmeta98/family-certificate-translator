@@ -321,11 +321,11 @@ for idx, r in enumerate(range(3, 13), start=1):
     # 5) extract the seal footer from *all* lines
     seal_footer = extract_seal_footer(blocks)
 
-    return {
-        "header":      header,
-        "rows":        data_rows,
-        "seal_footer": seal_footer
-    }
+return {
+    "header":      header,
+    "rows":        data_rows,
+    "seal_footer": seal_footer
+}
 
 
 # ── HEADER (Comune / Sezione) ───────────────────────────────────────────────
