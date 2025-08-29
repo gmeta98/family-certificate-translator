@@ -146,17 +146,26 @@ RELATION_MAP = {
 }
 
 MARITAL_MAP = {
-    "i martuar":  ("Coniugato", "Coniugata"),
-    "e martuar":  ("Coniugato", "Coniugata"),
-    "i/e martuar":("Coniugato", "Coniugata"),
-    "beqar":      ("Celibe", "Nubile"),
-    "beqare":     ("Celibe", "Nubile"),
-    "beqar/e":    ("Celibe", "Nubile"),
-    "i/e ve":     ("Vedovo", "Vedova"),
-    "i ve":       ("Vedovo", "Vedova"),
-    "e ve":       ("Vedovo", "Vedova"),
-    "i/e divorcuar": ("Divorziato", "Divorziata"),
-    "i/e ndare":     ("Separato", "Separata")
+    # use normalized keys (no slashes), because _norm() removes them:
+    "i martuar":      ("Coniugato", "Coniugata"),
+    "e martuar":      ("Coniugato", "Coniugata"),
+    "i e martuar":    ("Coniugato", "Coniugata"),
+    "martuar":        ("Coniugato", "Coniugata"),
+
+    "beqar":          ("Celibe", "Nubile"),
+    "beqare":         ("Celibe", "Nubile"),
+    "beqar e":        ("Celibe", "Nubile"),
+
+    "i e ve":         ("Vedovo", "Vedova"),
+    "i ve":           ("Vedovo", "Vedova"),
+    "e ve":           ("Vedovo", "Vedova"),
+    "ve":             ("Vedovo", "Vedova"),
+
+    "i e divorcuar":  ("Divorziato", "Divorziata"),
+    "divorcuar":      ("Divorziato", "Divorziata"),
+
+    "i e ndare":      ("Separato", "Separata"),
+    "ndare":          ("Separato", "Separata"),
 }
 
 CITIZENSHIP_MAP = {
@@ -190,11 +199,33 @@ def translate_relation(alb_relation: str, sex: str) -> str:
     return alb_relation
 
 def translate_marital_status(alb_status: str, sex: str) -> str:
+    """
+    Robust Stato Civile translator.
+    Accepts many Albanian variants, independent of slashes/casing/accents.
+    Falls back to heuristic contains()-style matching.
+    """
     n = _norm(alb_status)
     s = (sex or "").strip().upper()
+
+    # exact match first (fast path)
     if n in MARITAL_MAP:
         male, female = MARITAL_MAP[n]
         return female if s == "F" else male
+
+    # heuristics (covers unseen variants)
+    if "martuar" in n:
+        return "Coniugata" if s == "F" else "Coniugato"
+    if "beqar" in n or "beqare" in n:
+        return "Nubile" if s == "F" else "Celibe"
+    if "divorcuar" in n:
+        return "Divorziata" if s == "F" else "Divorziato"
+    # match isolated 've' as a word (widowed)
+    if re.search(r"\bve\b", n):
+        return "Vedova" if s == "F" else "Vedovo"
+    if "ndare" in n:  # ndarë
+        return "Separata" if s == "F" else "Separato"
+
+    # fallback: return original text if we didn't recognize it
     return alb_status
 
 
