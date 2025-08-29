@@ -541,7 +541,7 @@ def make_docx(people, comune, sezione, seal_text):
         for i,key in enumerate(cols):
             val = person.get(key,"")
             cells[i].text = val
-            cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            cells[i].paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
     for row in dt.rows:
         for cell in row.cells:
