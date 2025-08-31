@@ -496,7 +496,7 @@ def make_docx(people, comune, sezione, seal_text):
     run = p0.add_run("\nCERTIFICATO DI STATO DI FAMIGLIA\n")
     run.bold = True
     run.font.name = "Times New Roman"
-    run.font.size = Pt(11)
+    run.font.size = Pt(12)
     p0.paragraph_format.line_spacing = 1
     p0.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
    
@@ -506,12 +506,12 @@ def make_docx(people, comune, sezione, seal_text):
     run = p0.add_run("\n\nIn base al Registro Nazionale dello Stato Civile dell’anno 2010, si certificano i seguenti dati:\n")
     run.bold = False
     run.font.name = "Times New Roman"
-    run.font.size = Pt(11)
+    run.font.size = Pt(12)
     p0.paragraph_format.line_spacing = 1
     p0.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     
 
-    addp("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTraduzione eseguita da:\nVjollca META", size=11, align="center", indent=18)
+    addp("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTraduzione eseguita da:\nVjollca META", size=11, align="center", indent=18)
 
     doc.add_page_break()
 
@@ -545,8 +545,17 @@ def make_docx(people, comune, sezione, seal_text):
     tbl_layout.set(qn('w:type'), 'fixed')
     tbl_pr.append(tbl_layout)
 
+    # ── shift only THIS table left/right ─────────────────────────────
+    # positive moves it right; negative lets it "eat into" the left margin
+    indent_cm = -0.5   # try -0.5 cm; use 0 for flush with margin, or adjust as you like
+
+    tbl_indent = OxmlElement('w:tblInd')
+    tbl_indent.set(qn('w:w'), str(int(Cm(indent_cm).pt * 20)))  # twips
+    tbl_indent.set(qn('w:type'), 'dxa')
+    tbl_pr.append(tbl_indent)
+
     # 3) now set your exact column widths
-    widths_cm = [0.9, 4, 2.4, 2.4, 0.7, 3, 2.4, 2.5, 4, 1.9, 2.7]
+    widths_cm = [0.9, 4, 2.4, 2.4, 0.7, 3, 2.4, 2.5, 4.5, 1.9, 2.7]
     for col, w in zip(dt.columns, widths_cm):
         col.width = Cm(w)
         for cell in col.cells:
