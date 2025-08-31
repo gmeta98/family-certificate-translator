@@ -240,6 +240,38 @@ def extract_issue_date(blocks):
                 return txt
     return ""
 
+# ── HELPER Tirane/Tirana Durres Durazzo
+
+_EXONYM_SUBS = [
+    (re.compile(r"\bTiran[ëe]\b",  re.IGNORECASE), "Tirana"),
+    (re.compile(r"\bVlor[ëe]\b",   re.IGNORECASE), "Valona"),
+    (re.compile(r"\bDurr[ëe]s\b",  re.IGNORECASE), "Durazzo"),
+    (re.compile(r"\bShkod[ëe]r\b", re.IGNORECASE), "Scutari"),
+]
+
+def map_exonyms(text: str | None) -> str:
+    if not text:
+        return text or ""
+    out = text
+    for rx, repl in _EXONYM_SUBS:
+        out = rx.sub(repl, out)
+    return out
+
+def exonymize_deep(obj):
+    """Recursively replace city names in any str within dict/list/tuple."""
+    if isinstance(obj, str):
+        return map_exonyms(obj)
+    if isinstance(obj, dict):
+        return {k: exonymize_deep(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [exonymize_deep(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(exonymize_deep(v) for v in obj)
+    return obj
+
+def normalize_comune_sezione(comune: str, sezione: str) -> tuple[str, str]:
+    return map_exonyms(comune), map_exonyms(sezione)
+
 # ── HELPER: SEAL FOOTER ──────────────────────────────────────────────────────
 def extract_seal_footer(blocks):
     import re
@@ -647,8 +679,11 @@ if uploaded_files and st.button("Translate"):
             people     = table_data["rows"]
             comune,sez = extract_comune_sezione(blocks)
             seal   = extract_seal_footer(blocks)
-            issue_date = extract_issue_date(blocks)  
-            docx_b = make_docx(people, comune, sez, seal)
+            issue_date = extract_issue_date(blocks)
+            people     = exonymize_deep(people)
+            comune,sez = normalize_comune_sezione(comune, sez)
+            seal_text  = map_exonyms(seal_text)  
+            docx_b = make_docx(people, comune, sez, seal_text)
 
         if single:
             name = f"Certificato_di_Famiglia_{datetime.today():%d-%m-%Y}.docx"
