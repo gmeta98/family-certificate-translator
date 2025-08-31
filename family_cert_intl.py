@@ -131,8 +131,10 @@ RELATION_MAP = {
     "biri": "Figlio",
     "e bija": "Figlia",
     "bija": "Figlia",
-    "bashkeshortja": "Moglie",
-    "bashkeshorti": "Marito",
+    "bashkeshortja": "Consorte",
+    "bashkeshorti": "Consorte",
+    "bashkeshorte": "Consorte",
+    "bashkeshorti": "Consorte",
     "gruaja": "Moglie",
     "burri": "Marito",
     "nipi": "Nipote (maschio)",
@@ -470,13 +472,13 @@ def make_docx(people, comune, sezione, seal_text):
     c1 = hdr.cell(0,0).paragraphs[0]
     img = os.path.join(os.getcwd(),"al_flag.png")
     if os.path.exists(img):
-        run = c1.add_run(); run.add_picture(img, width=Cm(0.9))
-    c1.add_run("\n\nREPUBBLICA D'ALBANIA\n\n").bold = True
+        run = c1.add_run();  run.add_break(); run.add_picture(img, width=Cm(0.9))
+    c1.add_run("\n\nREPUBBLICA D'ALBANIA\n").bold = True
     c1.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
     c2 = hdr.cell(0,1).paragraphs[0]
     parts = []
-    if comune:   parts.append(f"\n\n\nUfficio di Stato Civile Comune di {comune}")
+    if comune:   parts.append(f"\n\n\n\nUfficio di Stato Civile Comune di {comune}")
     if sezione: parts.append(f"Sezione Amministrativa {sezione}")
     c2.add_run("\n".join(parts)).bold = True
     c2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
@@ -511,7 +513,7 @@ def make_docx(people, comune, sezione, seal_text):
     p0.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
     
 
-    addp("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTraduzione eseguita da:\nVjollca META", size=11, align="center", indent=18)
+    addp("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTraduzione eseguita da:\nVjollca META", size=11, align="center", indent=18)
 
     doc.add_page_break()
 
@@ -657,7 +659,7 @@ def make_docx(people, comune, sezione, seal_text):
     p.add_run(cert).font.size = Pt(10)
     p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
-    addp("\nTraduzione eseguita da:\nVjollca META", size=11, align="center", indent=18)
+    addp("\n\nTraduzione eseguita da:\nVjollca META", size=11, align="center", indent=18)
 
     buf = BytesIO()
     doc.save(buf)
