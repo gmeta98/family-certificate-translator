@@ -667,7 +667,6 @@ def make_docx(people, comune, sezione, seal_text):
     return buf
 
 
-
 # ── MAIN FLOW ───────────────────────────────────────────────────────────────
 if uploaded_files and st.button("Translate"):
     single = len(uploaded_files)==1
